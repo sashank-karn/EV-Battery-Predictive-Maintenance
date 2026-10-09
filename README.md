@@ -12,7 +12,7 @@ A Big Data Analytics project using Apache Kafka, Apache Spark Structured Streami
 
 ## Technology Stack
 
-- Apache Kafka 4.2.2
+- Apache Kafka 4.2.2 (KRaft mode)
 - Apache Spark 4.2.0
 - Spark Structured Streaming and MLlib
 - Python, PyArrow and Parquet
@@ -31,18 +31,18 @@ A Big Data Analytics project using Apache Kafka, Apache Spark Structured Streami
 ## Repository Structure
 
 - `spark/` - preprocessing, feature engineering, model training and streaming scripts
-- `kafka/` - telemetry producer
+- `kafka/` - telemetry producer and consumer test
 - `dashboard/` - Streamlit dashboard
-- `report/` - evaluation results and project report
-- `screenshots/` - demonstration and project evidence
-- `dataset/` - local datasets and generated Parquet files, excluded from Git
+- `report/` - project report and evaluation results
+- `screenshots/` - project evidence and demonstration screenshots
+- `dataset/` - local source data and generated Parquet files, excluded from Git
 - `ml/` - locally generated model artifacts, excluded from Git
 - `checkpoints/` - streaming checkpoint data, excluded from Git
-- `requirements.txt` - Python dashboard and data-processing dependencies
+- `requirements.txt` - Python dependencies for dashboard and data utilities
 
 ## Prerequisites
 
-Install and configure Java, Apache Spark 4.2.0, Apache Kafka 4.2.2 in KRaft mode, Python, and the source EV telemetry dataset separately.
+Install and configure Java, Apache Spark 4.2.0, Apache Kafka 4.2.2 in KRaft mode, Python 3, and the source EV telemetry dataset separately. The data and trained model are not committed to this repository.
 
 The Spark Kafka connector used by the streaming job is:
 
@@ -50,24 +50,17 @@ The Spark Kafka connector used by the streaming job is:
 
 ## Python Environment
 
-From the project root:
+Run from the project root:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python spark/normalize_sources.py
-spark-submit spark/preprocessing.py
-spark-submit spark/create_ml_dataset.py
-spark-submit spark/train_valid_test.py
-python kafka/producer.py
-```bash
-spark-submit spark/streaming_ml.py
 ```
 
-## Running the Pipeline
+## Running the Batch Pipeline
 
-Run these commands from the project root after preparing the dataset and system dependencies:
+Place the source dataset in the local location expected by the scripts. Run these commands in order:
 
 ```bash
 python spark/normalize_sources.py
@@ -75,12 +68,15 @@ spark-submit spark/preprocessing.py
 spark-submit spark/create_ml_dataset.py
 spark-submit spark/train_valid_test.py
 ```
+
+The training step creates the local model artifact required for streaming inference. Generated Parquet files and model artifacts are excluded from Git.
 
 ## Kafka Streaming
 
-Start Kafka and ensure the `battery-telemetry` topic exists. Publish telemetry using:
+Start Kafka in KRaft mode and ensure the `battery-telemetry` topic exists. In one terminal, publish sample telemetry:
 
 ```bash
+source .venv/bin/activate
 python kafka/producer.py
 ```
 
@@ -90,10 +86,11 @@ In a separate terminal, run Spark streaming inference:
 spark-submit spark/streaming_ml.py
 ```
 
+The producer reads a locally prepared CUP1 Parquet file. The streaming query consumes Kafka messages and prints batch inference output to the console. This is a demonstration pipeline, not a continuously persisted prediction service.
 
 ## Dashboard
 
-After generating the datasets and evaluation results:
+After generating the processed datasets and evaluation results, run:
 
 ```bash
 source .venv/bin/activate
@@ -106,7 +103,7 @@ The dashboard displays historical telemetry and model evaluation results, not li
 
 The experimental label marks a window as risk when the maximum absolute voltage change over a future observation horizon exceeds 20 V. This is a project-defined proxy, not a confirmed battery failure label or a manufacturer-certified safety threshold.
 
-Held-out test results at the validation-selected threshold of 0.70:
+The risk class is rare: 4,591 of 853,106 windows (approximately 0.54%). At the threshold of 0.70 selected using validation results, held-out test metrics were:
 
 | Metric | Result |
 |---|---:|
@@ -117,7 +114,7 @@ Held-out test results at the validation-selected threshold of 0.70:
 | False positives | 696 |
 | False negatives | 733 |
 
-The dataset is highly imbalanced. This is an experimental baseline, not a production-ready battery failure predictor.
+The baseline has limited ability to identify the proxy risk class and produces many false alarms. These results must not be interpreted as a production-ready battery-failure predictor.
 
 ## Reproducibility
 
@@ -125,9 +122,8 @@ The dataset is highly imbalanced. This is an experimental baseline, not a produc
 - Run normalization and processing before training.
 - Generate the model before running streaming inference.
 - Start Kafka before running the producer and streaming job.
-- Generated datasets, model artifacts and checkpoints are excluded from Git.
+- Keep generated datasets, model artifacts and checkpoints local; they are excluded from Git.
 
 ## Academic Project
 
 Developed as a Big Data Analytics case study on EV telemetry processing and experimental predictive maintenance.
-```
