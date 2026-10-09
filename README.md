@@ -33,7 +33,7 @@ A Big Data Analytics project using Apache Kafka, Apache Spark Structured Streami
 - `spark/` - preprocessing, feature engineering, model training and streaming scripts
 - `kafka/` - telemetry producer and consumer test
 - `dashboard/` - Streamlit dashboard
-- `report/` - project report and evaluation results
+- `report/` - [project report](report/CA3_Project_Report.md) and evaluation results
 - `screenshots/` - project evidence and demonstration screenshots
 - `dataset/` - local source data and generated Parquet files, excluded from Git
 - `ml/` - locally generated model artifacts, excluded from Git
